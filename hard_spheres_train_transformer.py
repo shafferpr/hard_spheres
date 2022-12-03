@@ -11,6 +11,8 @@ from simple_transformer import TransformerEncoder
 from jax.example_libraries import optimizers
 from jax.example_libraries import stax
 from functools import partial
+import argparse
+
 n_particles = 4
 n_dimensions = 2
 batch_size = 3
@@ -20,7 +22,7 @@ positions, box_vectors = hard_spheres_init(n_dimensions = n_dimensions, n_partic
 #intialize a transfromer encoder
 main_rng = random.PRNGKey(42)
 input_encoding_dimension = 2 #same as the number of dimensions of the particle positions
-#I think I need to remove the batching from the encoder
+
 encoder = TransformerEncoder(num_layers=4,
                               input_dim=input_encoding_dimension, #particle positions for the simple case, same as n_dimensions
                               num_heads=1,
