@@ -1,5 +1,5 @@
 #Implements a vanilla transformer for modeling the score function of the hard spheres distribution
-
+#This implementation does not have the batch size as an input to the encoder, the batch size is implemented in the training code
 from flax import linen as nn
 import jax.numpy as jnp
 from jax import random
@@ -115,7 +115,7 @@ class TransformerEncoder(nn.Module):
         return attention_maps
 
 
-main_rng = random.PRNGKey(42)
+'''main_rng = random.PRNGKey(42)
 main_rng, x_rng = random.split(main_rng)
 x = random.normal(x_rng, (16, 128))
 # Create Transformer encoder
@@ -134,5 +134,5 @@ main_rng, dropout_apply_rng = random.split(main_rng)
 binded_mod = transenc.bind({'params': params}, rngs={'dropout': dropout_apply_rng})
 out = binded_mod(x, train=True)
 print('Out', out.shape)
-attn_maps = binded_mod.get_attention_maps(x, train=True)
+attn_maps = binded_mod.get_attention_maps(x, train=True)'''
 
