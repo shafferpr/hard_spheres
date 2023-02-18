@@ -46,7 +46,7 @@ if __name__ == '__main__':
     if args.box_vectors:
         box_vectors = jnp.asarray(args.box_vectors)
     else:
-        box_vectors = jnp.asarray([[1.1*n_particles,0],[0,1.1*n_particles]])
+        box_vectors = jnp.asarray([[1.0*math.sqrt(n_particles),0],[0,1.0*math.sqrt(n_particles)]])
     n_steps = args.n_steps
     batch_size = args.batch_size
     prng_key = args.prng_key
