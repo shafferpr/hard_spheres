@@ -8,26 +8,6 @@ import json
 from hexalattice.hexalattice import create_hex_grid
 import os
 
-'''n_dimensions=2
-n_particles=16
-box_vectors = jnp.asarray([[1.1*n_particles,0],[0,1.1*n_particles]])
-radius=1.0
-
-positions_init=jnp.asarray([[x*1.05,y*1.05] for x in range(4) for y in range(4)],dtype=float)
-
-
-n_iterations=5000
-key=random.PRNGKey(42)
-positions_all=[positions_init]
-positions=positions_init
-for i in range(n_iterations):
-    positions,key=hs_utils.single_step(positions,n_particles,box_vectors,key)
-    if i%(2*n_particles) == 0:
-        positions_all.append(positions)
-
-
-np.savetxt("trajectory.txt",positions_all)'''
-
 
 
 if __name__ == '__main__':
@@ -59,14 +39,11 @@ if __name__ == '__main__':
     with open("{}/args.json".format(output_directory), 'w') as fp:
         json.dump(args.__dict__, fp, indent=4)
     positions_init = jnp.asarray(create_hex_grid(int(math.sqrt(n_particles)),int(math.sqrt(n_particles)),align_to_origin=False)[0])
-    #positions_init=jnp.asarray([[x*1.05,y*1.05] for x in range(int(math.sqrt(n_particles))) for y in range(int(math.sqrt(n_particles)))],dtype=float)
+
     key=random.PRNGKey(42)
     positions=positions_init
     for i in range(int(n_steps/batch_size)):
         batch_positions = hs_utils.sample_batch(positions_init,n_particles,box_vectors,batch_size)
         positions_init = batch_positions[-1]
         np.save("{}/positions_{}.npy".format(args.output_directory,i),batch_positions)
-    #for i in range(n_steps):
-    #    positions,key=hs_utils.single_step(positions,n_particles,box_vectors,key)
-    #    if i%(2*n_particles) == 0:
-    #        positions_all.append(positions)
+

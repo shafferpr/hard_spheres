@@ -71,3 +71,7 @@ batch=sample_batch(positions, n_particles, box_vectors, batch_size=64)
     loss_history.append(loss.item())
     print(loss,i)'''
 
+if __name__=="__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input_directory', type=str, help='input directory')
+    

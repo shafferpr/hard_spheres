@@ -61,21 +61,7 @@ def displace_particle(positions, n_particles, box_vectors, key):
     key, subkey = jax.random.split(key)
     particle_index=random.randint(shape=(),minval=0,maxval=n_particles,key=subkey)
     displacement=0.05*random.normal(key=subkey, shape=[n_dimensions])
-    #new_position=positions[particle_index]+displacement
     new_position = apply_periodic_bc(box_vectors, positions[particle_index], displacement)
-    '''#replace if statements
-    jnp.where(new_position[0]>box_vectors[0,0], new_position=new_position-box_vectors[0,0], new_position=new_position)
-    #if new_position[0]>box_vectors[0,0]:
-    #    new_position=new_position-box_vectors[0,0]
-    jnp.where(new_position[1]>box_vectors[1,1], new_position=new_position-box_vectors[1,1], new_position=new_position)
-    #if new_position[1]>box_vectors[1,1]:
-    #    new_position=new_position-box_vectors[1,1]
-    jnp.where(new_position[0]<0, new_position=new_position+box_vectors[0,0], new_position=new_position)
-    #if new_position[0]<0:
-    #    new_position=new_position+box_vectors[0,0]
-    jnp.where(new_position[1]<0, new_position=new_position+box_vectors[1,1], new_position=new_position)
-    #if new_position[1]<0:
-    #    new_position=new_position+box_vectors[1,1]'''
     return new_position, particle_index, key
 
 @jax.jit
@@ -88,13 +74,6 @@ def apply_periodic_bc(box_vectors, x, dx):
     return new_x
 
 
-#this function takes a position in the plane and determines if it lies within a parallelogram defined by the box vectors
-@jax.jit
-def point_in_parallelogram(vector1, vector2, point):
-    matrix = np.array([vector1, vector2])
-    inverse_matrix = np.linalg.inv(matrix)
-    result = np.dot(inverse_matrix, point)
-    return all(0 <= x <= 1 for x in result)
 
 def single_step(positions, n_particles, box_vectors, key):
     new_position, particle_index, key=displace_particle(positions, n_particles, box_vectors, key)
@@ -110,7 +89,7 @@ def sample_batch(pos_init, n_particles, box_vectors, batch_size):
     positions=pos_init
     batch=[]
     for j in range(batch_size):
-        n_iterations=200
+        n_iterations=400
         key=random.PRNGKey(j)
         for i in range(n_iterations):
             positions,key=single_step(positions, n_particles, box_vectors, key)
