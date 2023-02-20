@@ -42,8 +42,11 @@ def nonoverlapping(x,y,box_v):
     return  jnp.where(dist>radius, True, False)
 
 @jax.jit
-def overlapping(x,y,box_v):
-    dist=distance_pbc(x,y,box_v)
+def overlapping(x, y ,box_v):
+    p1, r1 = x[:n_dimensions], x[-1] #split x into position and radius
+    p2, r2 = y[:n_dimensions], y[-1] #split y into position and radius
+    radius = (r1+r2)/2
+    dist=distance_pbc(p1,p2,box_v)
     return  jnp.where(dist<radius, 1, 0)
 
 batched_distance=vmap(distance,in_axes=(0,None,None))
@@ -75,9 +78,10 @@ def apply_periodic_bc(box_vectors, x, dx):
 
 
 
-def single_step(positions, n_particles, box_vectors, key):
+def single_step(positions, n_particles, box_vectors, key, sizes):
     new_position, particle_index, key=displace_particle(positions, n_particles, box_vectors, key)
-    overlaps=batched_overlaps(positions,new_position,box_vectors)
+    size = sizes[particle_index]
+    overlaps=batched_overlaps(jnp.concatenate([positions,jnp.asarray(sizes.reshape(-1,1))], axis=1), jnp.concatenate([position,jnp.asarray([position])]), box_vectors)
     n_overlaps = jnp.count_nonzero(overlaps)
     if n_overlaps == 1:
         new_positions = positions.at[particle_index].set(new_position)
@@ -85,14 +89,16 @@ def single_step(positions, n_particles, box_vectors, key):
     else:
         return positions, key
 
-def sample_batch(pos_init, n_particles, box_vectors, batch_size):
+def sample_batch(pos_init, n_particles, box_vectors, batch_size, sizes):
     positions=pos_init
     batch=[]
     for j in range(batch_size):
         n_iterations=400
         key=random.PRNGKey(j)
         for i in range(n_iterations):
-            positions,key=single_step(positions, n_particles, box_vectors, key)
+            positions,key=single_step(positions, n_particles, box_vectors, key, sizes)
+        #append sizes vector to positions
+        positions = jnp.concatenate([positions, jnp.asarray(sizes).reshape(-1,1)], axis=1)
         batch.append(positions)
     return jnp.asarray(batch)
     
