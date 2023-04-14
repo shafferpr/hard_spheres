@@ -79,8 +79,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_directory', type=str, required=True)
     parser.add_argument('--encoder_layers', type=int, default=4, help='Number of layers in the encoder', required=False)
-    parser.add_argument('--encoder_heads', type=int, default=1, help='Number of heads in the encoder', required=False)
-    parser.add_argument('--encoder_dim_feedforward', type=int, default=56, help='Number of hidden units in the encoder', required=False)
+    parser.add_argument('--encoder_heads', type=int, default=3, help='Number of heads in the encoder', required=False)
+    parser.add_argument('--encoder_dim_feedforward', type=int, default=28, help='Number of hidden units in the encoder', required=False)
 
     args = parser.parse_args()
     
@@ -90,14 +90,14 @@ if __name__ == "__main__":
         hard_sphere_params = json.load(f)
     
 
-    input_encoding_dimension = hard_sphere_params['n_dimensions'] #same as the number of dimensions of the particle positions
+    input_encoding_dimension = hard_sphere_params['n_dimensions']+1 #same as the number of dimensions of the particle positions plus the particle size
     n_particles = hard_sphere_params['n_particles']
 
     encoder = TransformerEncoder(num_layers = args.encoder_layers,
                                 input_dim = input_encoding_dimension, #particle positions for the simple case, same as n_dimensions
                                 num_heads=args.encoder_heads,
                                 dim_feedforward=args.encoder_dim_feedforward,
-                                dropout_prob=0.1)
+                                dropout_prob=0.0)
 
     main_rng = random.PRNGKey(42)
     main_rng, x_rng = random.split(main_rng)
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     main_rng, init_rng, dropout_init_rng = random.split(main_rng, 3)
     params = encoder.init({'params': init_rng, 'dropout': dropout_init_rng}, x, train=True)['params']
-    opt_init, opt_update, get_params = optimizers.adam(1e-2)
+    opt_init, opt_update, get_params = optimizers.adam(5e-1)
     opt_state = opt_init(params)
     n_batches = int(hard_sphere_params['n_steps']/hard_sphere_params['batch_size'])
     loss_history=[]
@@ -115,3 +115,5 @@ if __name__ == "__main__":
         loss, opt_state = train_step(i, opt_state, batch)
         loss_history.append(loss.item())
         print(loss,i)
+    #save the parameters of the encoder
+    np.save(input_directory + '/encoder_params.npy', get_params(opt_state))

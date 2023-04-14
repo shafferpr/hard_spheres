@@ -48,5 +48,7 @@ if __name__ == '__main__':
         batch_positions = hs_utils.sample_batch(positions_init,n_particles,box_vectors,batch_size,sizes)
         sizes=sizes*0.98
         positions_init = batch_positions[-1]
+        #drop the third row (which is the size) of the positions array
+        positions_init = positions_init[:,:-1]
         np.save("{}/positions_{}.npy".format(args.output_directory,i),batch_positions)
 

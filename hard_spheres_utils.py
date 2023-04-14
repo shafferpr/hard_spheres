@@ -77,17 +77,21 @@ def apply_periodic_bc(box_vectors, x, dx):
     return new_x
 
 
-
+@jax.jit
 def single_step(positions, n_particles, box_vectors, key, sizes):
     new_position, particle_index, key=displace_particle(positions, n_particles, box_vectors, key)
     size = sizes[particle_index]
-    overlaps=batched_overlaps(jnp.concatenate([positions,jnp.asarray(sizes.reshape(-1,1))], axis=1), jnp.concatenate([position,jnp.asarray([position])]), box_vectors)
+    overlaps=batched_overlaps(jnp.concatenate([positions,jnp.asarray(sizes.reshape(-1,1))], axis=1), jnp.concatenate([new_position,jnp.asarray([size])]), box_vectors)
     n_overlaps = jnp.count_nonzero(overlaps)
-    if n_overlaps == 1:
-        new_positions = positions.at[particle_index].set(new_position)
-        return new_positions, key
-    else:
-        return positions, key
+    new_positions = jnp.where(n_overlaps == 1, positions.at[particle_index].set(new_position), positions)
+    return new_positions, key
+    #if n_overlaps == 1:
+    #    new_positions = positions.at[particle_index].set(new_position)
+    #    return new_positions, key
+    #else:
+    #    return positions, key
+    
+
 
 def sample_batch(pos_init, n_particles, box_vectors, batch_size, sizes):
     positions=pos_init
@@ -98,7 +102,7 @@ def sample_batch(pos_init, n_particles, box_vectors, batch_size, sizes):
         for i in range(n_iterations):
             positions,key=single_step(positions, n_particles, box_vectors, key, sizes)
         #append sizes vector to positions
-        positions = jnp.concatenate([positions, jnp.asarray(sizes).reshape(-1,1)], axis=1)
-        batch.append(positions)
+        positions_and_sizes = jnp.concatenate([positions, jnp.asarray(sizes).reshape(-1,1)], axis=1)
+        batch.append(positions_and_sizes)
     return jnp.asarray(batch)
     
